@@ -65,7 +65,7 @@ outlier.dump=function(vars,dataf) {
 		var.iqr = var.quantile.max - var.quantile.min
 		var.boxplot.min = var.quantile.min - 1.5 *var.iqr
 		var.boxplot.max = var.quantile.min + 1.5 *var.iqr
-		var.quantile=quantile(dataf[,var],c(0.025,0.975), na.rm=TRUE)
+		var.quantile=quantile(dataf[,var],c(0.01,0.99), na.rm=TRUE)
 		var.quantile.min= var.quantile[1]
 		var.quantile.max= var.quantile[2]
 		var.median = median(dataf[,var], na.rm=TRUE)
@@ -260,6 +260,81 @@ for(var in names(miss.rate)) {
   impute_var(var)
 }
 
+cols=union(setdiff(quali_all, c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
+cols_bmi=setdiff(cols,c("bmi"))
+data_cleaned=data_cleaned[cols]
+data_miss_bmi=prodNA(data_cleaned, 0.2)
+data_miss_other=prodNA(data_cleaned, 0.02)
+data_miss=cbind(data_miss_other[cols_bmi], data_miss_bmi[c("bmi")])
+data_cleaned=cbind(data_cleaned[cols_bmi],data_cleaned[c("bmi")])
+impute_algo=data.frame("test"=character(0),"method"=character(0), "NRMSE"=numeric(0), "PFC"=numeric(0))
+file_name=sprintf("impute_mixed.csv", var)
+file_name_summary=sprintf("impute_mixed_summary.csv", var)
+
+for(index in 1:4) {
+  
+
+  test=sprintf("test%i", index)
+  print(test)
+
+  print("Imputing with missMDA...")
+  famd.data = imputeFAMD(data_miss, ncp = 20)
+  famd.data=famd.clean(famd.data)
+  err=mixError( famd.data$completeObs, data_miss, data_cleaned)
+  print(err)
+  impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missMDA", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))
+    
+    
+    
+  #
+  # missForest
+  print("Imputing with missForest...")
+  missForest.data = missForest(data_miss, maxiter=7)
+  err=mixError(missForest.data$ximp, data_miss,data_cleaned)
+  print(err)
+  impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missForest", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))
+    
+    #
+    # VIM KNN
+    #
+    print("Imputing with VIM KNN...")
+    kNN.data = kNN( data_miss, dist_var=cols)
+    var.imp=paste(var,"imp",sep="_")
+    kNN.data=kNN.data[setdiff( colnames(kNN.data), c( var.imp))]
+    err=mixError( kNN.data, data_miss, data_cleaned)
+    print(err)
+    impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missVIMKnn", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))
+    
+    #
+    # VIM irmi (Robust Regression Model Input)
+    #
+    print("Imputing with VIM irmi...")
+    print(cols)
+    irmi.data=irmi(data_miss, mi=5)
+    for(index in 1:5) {
+      err=mixError( data.frame(irmi.data[index]), data_miss, data_cleaned)
+      print(err)
+      impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missVIMImri", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))
+    }
+    
+    #
+    # mice
+    #
+    print("Imputing with mice...")
+    mice.pred= quickpred(data_miss)
+    #mice.pred["bmi","copd"]=0
+    #mice.pred["bmi","country"]=0
+    mice.data=mice(data_miss, predictorMatrix=mice.pred)
+    for(index in 1:5) {
+      err=mixError(complete(mice.data, index), data_miss, data_cleaned)
+      print(err)
+      impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missMice", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))
+    }
+
+}
+dump_table(impute_algo,file_name)
+impute_algo_summary=impute_algo %>% group_by_("method") %>% summarize(mean(PFC), sd(PFC), mean(NRMSE), sd(NRMSE))
+dump_table(impute_algo_summary,file_name_summary)
 
 
 #
