@@ -1,7 +1,9 @@
 library("FactoMineR")
 library("factoextra")
+library("missMDA")
 library("dplyr")
 
+source("Common.R")
 
 cols=union(setdiff(quali_all, c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
 data_miss=data_train[cols]
@@ -83,7 +85,7 @@ for(centre in levels(data.muvar$centre)) {
   for( var in setdiff(cols,c("centre"))) {
     for(index in 1:5) {
       dim=sprintf("Dim.%i",index)
-      centre_famd=rbind(centre_pca,data.frame("centre"=centre,"var"=var,"dim"=index,"cos2"=centre.dim$cos2[quanti,dim]))
+      centre_famd=rbind(centre_famd,data.frame("centre"=centre,"var"=var,"dim"=index,"cos2"=centre.dim$cos2[var,dim]))
     }
   }
 }
