@@ -71,3 +71,20 @@ fviz_mca_var(mca, col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gr
 famd.data = imputeFAMD(data_miss)
 famd=FAMD(famd.data$completeObs, ncp=20)
 fviz_screeplot(famd, addlabels = TRUE, ylim = c(0, 50))
+centre_pca=data.frame("centre"=character(0),"var"=character(0),"dim"=numeric(0), "cos2"=numeric(0))
+file_centre_famd="centre_famd.csv"
+for(centre in levels(data.muvar$centre)) {
+  var=as.character(centre)
+  print(var)
+  centre.data = data.muvar %>% filter( data.muvar[c("centre")]==var)
+  centre.famd= FAMD(centre.data,sup.var=c(1,14,15,16), graph=FALSE)
+  centre.dim = get_famd(centre.famd, element=c("var"))
+  print(centre.data[1,])
+  for( var in setdiff(cols,c("centre"))) {
+    for(index in 1:5) {
+      dim=sprintf("Dim.%i",index)
+      centre_famd=rbind(centre_pca,data.frame("centre"=centre,"var"=var,"dim"=index,"cos2"=centre.dim$cos2[quanti,dim]))
+    }
+  }
+}
+dump_table(centre_famd,file_centre_famd)
