@@ -1,5 +1,7 @@
 source("Variables.R")
 
+load("data_train.rda")
+
 famd.clean= function(datafr) {
   tt=levels(datafr$completeObs$centre)
   tt=sub('[a-z]*_([0-9]*)','\\1',tt)
@@ -41,3 +43,53 @@ dump_table = function( data, file_name) {
   print(paste("Dumping table to file ", file_name))
   write.table(data, file=file_name, sep=";", row.names = FALSE, dec = ",", quote=FALSE)
 }
+
+
+  
+data.clean= function (datafr=data_train) {
+  bmi.min=13.4
+  bmi.max=42.76
+  age.min=31
+  age.max=107
+  egfr.min=13.99
+  egfr.max=168.88
+  sbp.min=50.5
+  sbp.max=179.5
+  dbp.min=41
+  dbp.max=103
+  hr.min= 46
+  hr.max=176
+  data_cleaned = datafr
+  data_cleaned[,c("bmi")]=ifelse(
+    ( is.na(data_cleaned[,c("bmi") ]))| ( data_cleaned[,c("bmi")] < bmi.min) | ( data_cleaned[, c("bmi")] > bmi.max),
+    NA,
+    data_cleaned[,c("bmi")])
+  data_cleaned[,c("age")]=ifelse(
+    ( is.na(data_cleaned[,c("age") ]))| ( data_cleaned[,c("age")] < age.min) | ( data_cleaned[, c("age")] > age.max),
+    NA,
+    data_cleaned[,c("age")])
+  data_cleaned[,c("egfr")]=ifelse(
+    ( is.na(data_cleaned[,c("egfr") ]))| ( data_cleaned[,c("egfr")] < egfr.min) | ( data_cleaned[, c("egfr")] > egfr.max),
+    NA,
+    data_cleaned[,c("egfr")])
+  data_cleaned[,c("sbp")]=ifelse(
+    ( is.na(data_cleaned[,c("sbp") ]))| ( data_cleaned[,c("sbp")] < sbp.min) | ( data_cleaned[, c("sbp")] > sbp.max),
+    NA,
+    data_cleaned[,c("sbp")])
+  data_cleaned[,c("dbp")]=ifelse(
+    ( is.na(data_cleaned[,c("dbp") ]))| ( data_cleaned[,c("dbp")] < dbp.min) | ( data_cleaned[, c("dbp")] > dbp.max),
+    NA,
+    data_cleaned[,c("dbp")])
+  data_cleaned[,c("dbp")]=ifelse(
+    ( is.na(data_cleaned[,c("dbp") ]))| ( data_cleaned[,c("dbp")] < dbp.min) | ( data_cleaned[, c("dbp")] > dbp.max),
+    NA,
+    data_cleaned[,c("dbp")])
+  data_cleaned[,c("hr")]=ifelse(
+    ( is.na(data_cleaned[,c("hr") ]))| ( data_cleaned[,c("hr")] < hr.min) | ( data_cleaned[, c("hr")] > hr.max),
+    NA,
+    data_cleaned[,c("hr")])
+  data_cleaned.quanti=scale(data_cleaned[quanti_all])
+  data_cleaned=cbind(data_cleaned.quanti, data_cleaned[quali_all])
+  return(data_cleaned)
+}
+
