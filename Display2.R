@@ -7,18 +7,13 @@ library("grid")
 library("gridExtra")
 
   
-
+source("Common.R")
 quanti_expl=c("bmi","age","egfr","sbp","dbp", "hr") 
 quanti_all=c("bmi","age","egfr","sbp","dbp", "hr", "lvef")
 quali_expl=c("centre","country","gender","copd","hypertension","previoushf","afib","cad")
 quali_all=c("centre","country","gender","copd","hypertension","previoushf","afib","cad", "lvefbin")
 
- 
-dump_table = function( data, file_name) {
-	print(paste("Dumping table to file ", file_name))
-	write.table(data, file=file_name, sep=";", row.names = FALSE, dec = ",", quote=FALSE)
-}
- 
+
 
 quali.pie = function ( quali ) { 
     quali.data = data_train %>% group_by_(quali ) %>% summarise(count=n()) %>% mutate(prop=round(count*100/sum(count), 1))  

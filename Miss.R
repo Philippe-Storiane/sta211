@@ -5,8 +5,7 @@ library("missForest")
 library("VIM")
 library("mice")
 
-source("Variables.R")
-source("Display2.R")
+source("Common.R")
 #
 # basic analysis
 #
@@ -226,6 +225,9 @@ for(var in names(miss.rate)) {
   impute_var(var)
 }
 
+#
+# new testing mode with all variables mixed with their simulated missing rate
+#
 cols=union(setdiff(quali_all, c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
 cols_bmi=setdiff(cols,c("bmi"))
 data_cleaned=data_cleaned[cols]
@@ -237,12 +239,15 @@ impute_algo=data.frame("test"=character(0),"method"=character(0), "NRMSE"=numeri
 file_name=sprintf("impute_mixed.csv", var)
 file_name_summary=sprintf("impute_mixed_summary.csv", var)
 
-for(index in 1:4) {
+for(index in 1:5) {
   
 
   test=sprintf("test%i", index)
   print(test)
-
+  data_miss_bmi=prodNA(data_cleaned, 0.2)
+  data_miss_other=prodNA(data_cleaned, 0.02)
+  data_miss=cbind(data_miss_other[cols_bmi], data_miss_bmi[c("bmi")])
+  
   print("Imputing with missMDA...")
   famd.data = imputeFAMD(data_miss, ncp = 20)
   famd.data=famd.clean(famd.data)
@@ -265,8 +270,7 @@ for(index in 1:4) {
     #
     print("Imputing with VIM KNN...")
     kNN.data = kNN( data_miss, dist_var=cols)
-    var.imp=paste(var,"imp",sep="_")
-    kNN.data=kNN.data[setdiff( colnames(kNN.data), c( var.imp))]
+    kNN.data=kNN.data[cols]
     err=mixError( kNN.data, data_miss, data_cleaned)
     print(err)
     impute_algo=rbind(impute_algo, data.frame("test"=test, "method"="missVIMKnn", "NRMSE"=err["NRMSE"],"PFC"=err["PFC"]))

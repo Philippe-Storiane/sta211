@@ -1,11 +1,10 @@
-
 source("Variables.R")
 
 famd.clean= function(datafr) {
   tt=levels(datafr$completeObs$centre)
   tt=sub('[a-z]*_([0-9]*)','\\1',tt)
   levels(datafr$completeObs$centre) <- tt
-
+  
   #tt=levels(famd.data$completeObs$country)
   #tt=sub('[a-z]*_([0-9]*)','\\1',tt)
   #eval.parent(substitute(levels(famd.data$completeObs$country) <- tt))
@@ -13,7 +12,7 @@ famd.clean= function(datafr) {
   tt=levels(datafr$completeObs$gender)
   tt=sub('[a-z]*_([0-9]*)','\\1',tt)
   levels(datafr$completeObs$gender)<- tt
-
+  
   tt=levels(datafr$completeObs$hypertension)
   tt=sub('[a-z]*_([0-9]*)','\\1',tt)
   levels(datafr$completeObs$hypertension)<- tt
@@ -39,6 +38,6 @@ famd.clean= function(datafr) {
 
 
 dump_table = function( data, file_name) {
-	print(paste("Dumping table to file ", file_name))
-	write.table(data, file=file_name, sep=";", row.names = FALSE, dec = ",", quote=FALSE)
+  print(paste("Dumping table to file ", file_name))
+  write.table(data, file=file_name, sep=";", row.names = FALSE, dec = ",", quote=FALSE)
 }

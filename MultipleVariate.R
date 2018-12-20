@@ -70,8 +70,6 @@ fviz_mca_var(mca, col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gr
 #
 # Multiple Data Analysis
 #
-famd.data = imputeFAMD(data_miss)
-famd=FAMD(famd.data$completeObs, ncp=20)
 fviz_screeplot(famd, addlabels = TRUE, ylim = c(0, 50))
 centre_pca=data.frame("centre"=character(0),"var"=character(0),"dim"=numeric(0), "cos2"=numeric(0))
 file_centre_famd="centre_famd.csv"
