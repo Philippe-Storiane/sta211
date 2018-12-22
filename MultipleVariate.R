@@ -5,7 +5,6 @@ library("dplyr")
 
 source("Common.R")
 
-cols=union(setdiff(quali_all, c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
 data_miss=data_train[cols]
 #
 # Imputing withh missForrest
@@ -33,6 +32,7 @@ data1=imputePCA(data_cleaned[setdiff(quanti_all,c("lvef"))], ncp=5)
 mca.data=cbind(data1$completeObs,data_cleaned[union(quali_all,c("lvef"))])
 pca=PCA(mca.data, quali.sup=c(7,8,9,10,11,12,13,14,15),quanti.sup=16, scale.unit=TRUE,graph=FALSE)
 fviz_screeplot(pca, addlabels = TRUE, ylim = c(0, 50))
+fviz_contrib(pca, choice=c("var"), axe=1)
 fviz_pca_var(pca, select.var=list("cos2"=0.5),col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
 centre_pca=data.frame("centre"=character(0),"var"=character(0),"dim"=numeric(0), "cos2"=numeric(0))
@@ -87,6 +87,8 @@ mca_no_centre=MCA( mca.data_no_centre, quali.sup=c(7), graph=FALSE, ncp=10)
 mca_no_centre1=MCA( mca.data_no_centre1, quali.sup=c(7), graph=FALSE, ncp=10)
 
 mca=MCA( mca.data, quali.sup=c(9), graph=FALSE, ncp=10)
+fviz_screeplot(pca_completed, addlabels = TRUE, ylim = c(0, 50))
+fviz_contrib(mca,choice=c("var"),axe=1)
 # Complemental variables removed (only describing variable with cos2 > 0.5)
 fviz_mca_var(mca_no_centre, select.var=list("cos2"=0.5),  invisible=c("quali.sup"), col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 # without removing complemental variable
@@ -100,7 +102,7 @@ data_cleaned=data.clean()
 famd.data = imputeFAMD(data_cleaned[cols],ncp=20)
 famd.data_no_centre=imputeFAMD(data_cleaned[setdiff(cols, c("centre"))], ncp=15)
 famd=FAMD(famd.data$completeObs, ncp=10, graph=FALSE)
-famd_no_centre=FAMD(famd.data_no_centre$completeObs, ncp=10, grah=FALSE)
+famd_no_centre=FAMD(famd.data_no_centre$completeObs, ncp=10, graph=FALSE)
 fviz_screeplot(famd_no_centre, addlabels = TRUE, ylim = c(0, 50))
 fviz_famd_var(famd_no_centre, choice=c("quali.var"), select.var=list("cos2"=0.5),   col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
