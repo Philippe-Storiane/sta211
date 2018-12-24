@@ -71,40 +71,52 @@ data2=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin"))])
 data3=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin","country","centre"))])
 
 mca.data=cbind(data2$completeObs[setdiff(quali_all, c("lvefbin"))],data_cleaned[c("lvefbin")])
+# country has not  been used in impuation model
 mca.data_no_country=cbind(data1$completeObs[setdiff(quali_all, c("lvefbin","country"))],data_cleaned[c("lvefbin")])
+# country has been used in impuation model
+mca.data_no_country1=cbind(data2$completeObs[setdiff(quali_all, c("lvefbin","country"))],data_cleaned[c("lvefbin")])
+
 # centre has been used in impuation model
 mca.data_no_centre=cbind(data1$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
 # centre has not been used in imputation model
 mca.data_no_centre1=cbind(data3$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
+# all data have been used in imputation model
+mca.data_no_centre2=cbind(data2$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
+
 
 # Analysis without all variables excluding to explain
 mca=MCA( mca.data_no_country, quali.sup=c(8), graph=FALSE, ncp=10)
 
 # Analysis without country and center
 
-mca_no_country=MCA( mca.data_no_country, quali.sup=c(1,8), graph=FALSE, ncp=10)
+mca_no_country=MCA( mca.data_no_country, quali.sup=c(8), graph=FALSE, ncp=20)
 mca_no_centre=MCA( mca.data_no_centre, quali.sup=c(7), graph=FALSE, ncp=10)
 mca_no_centre1=MCA( mca.data_no_centre1, quali.sup=c(7), graph=FALSE, ncp=10)
 
-mca=MCA( mca.data, quali.sup=c(9), graph=FALSE, ncp=10)
-fviz_screeplot(pca_completed, addlabels = TRUE, ylim = c(0, 50))
+mca=MCA( mca.data, quali.sup=c(9), graph=FALSE, ncp=20)
+fviz_screeplot(mca, addlabels = TRUE, ylim = c(0, 50), title="Toutes variables explicatives hors pays et centre")
 fviz_contrib(mca,choice=c("var"),axe=1)
 # Complemental variables removed (only describing variable with cos2 > 0.5)
-fviz_mca_var(mca_no_centre, select.var=list("cos2"=0.5),  invisible=c("quali.sup"), col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
+fviz_mca_var(mca, select.var=list("cos2"=0.5),  invisible=c("quali.sup"), col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 # without removing complemental variable
-fviz_mca_var(mca_no_centre, select.var=list("cos2"=0.5),   col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
+fviz_mca_var(mca, select.var=list("cos2"=0.4),   col.var="cos2",axes=c(1,2), title="Axe 1-2 Toutes variables explicatives hors pays et centre - 10 premières contributions") + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
 
 #
 # Multiple Data Analysis
 #
+cols=union(setdiff(quali_all,c("lvefbin")),setdiff(quanti_all,c("lvef")))
 data_cleaned=data.clean()
-famd.data = imputeFAMD(data_cleaned[cols],ncp=20)
-famd.data_no_centre=imputeFAMD(data_cleaned[setdiff(cols, c("centre"))], ncp=15)
-famd=FAMD(famd.data$completeObs, ncp=10, graph=FALSE)
-famd_no_centre=FAMD(famd.data_no_centre$completeObs, ncp=10, graph=FALSE)
+famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+famd.impute_no_centre=imputeFAMD(data_cleaned[setdiff(cols, c("centre","country"))], ncp=15)
+famd.data=cbind(famd.impute$completeObs[setdiff(cols,c("centre","country"))],data_cleaned[c("lvef","lvefbin")])
+famd.data_no_centre=cbind(famd.impute_no_centre$completeObs[setdiff(cols,c("centre","country"))],data_cleaned[c("lvef","lvefbin")])
+
+famd=FAMD(famd.data, sup.var=c(13,14),ncp=15, graph=FALSE)
+famd_no_centre=FAMD(famd.data_no_centre, ncp=10, graph=FALSE)
 fviz_screeplot(famd_no_centre, addlabels = TRUE, ylim = c(0, 50))
-fviz_famd_var(famd_no_centre, choice=c("quali.var"), select.var=list("cos2"=0.5),   col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
+fviz_contrib(famd,choice=c("var"),axe=1)
+fviz_famd_var(famd, choice=c("quali.var"), select.var=list("contrib"=5),   col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
 
 centre_pca=data.frame("centre"=character(0),"var"=character(0),"dim"=numeric(0), "cos2"=numeric(0))
