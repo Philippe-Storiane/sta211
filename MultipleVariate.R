@@ -25,7 +25,7 @@ save(data.muvar, file="data_muvar.rda")
 #
 # Principal Component Analysis
 #
-# remove varibale to explain and bmi because of high miss
+# remove varibale to explain
 load("data_muvar.rda")
 data_cleaned=data.clean(data.muvar)
 data1=imputePCA(data_cleaned[setdiff(quanti_all,c("lvef"))], ncp=5)
@@ -35,6 +35,9 @@ fviz_screeplot(pca, addlabels = TRUE, ylim = c(0, 50))
 fviz_contrib(pca, choice=c("var"), axe=1)
 fviz_pca_var(pca, select.var=list("cos2"=0.5),col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
+#
+# Dump variable cos2 per center and dimension
+#
 centre_pca=data.frame("centre"=character(0),"var"=character(0),"dim"=numeric(0), "cos2"=numeric(0))
 file_centre_pca=sprintf("centre_pca.csv")
 for(centre in levels(data.muvar$centre)) {
@@ -52,6 +55,35 @@ for(centre in levels(data.muvar$centre)) {
   }
 }
 dump_table(centre_pca,file_centre_pca)
+
+
+#
+# Dump variable PCA coordinatez per center
+#
+centre_pca=data.frame("centre"=character(0),"var"=character(0),"Dim.1"=numeric(0), "Dim.2"=numeric(0), "Dim.3"=numeric(0), "Dim.4"=numeric(0), "Dim.5"=numeric(0))
+file_centre_pca_dacp="centre_pca_dacp.csv"
+for(centre in levels(data.muvar$centre)) {
+  var=as.character(centre)
+  print(var)
+  centre.data = data.muvar %>% filter( data.muvar[c("centre")]==var)
+  centre.pca= PCA(centre.data,quali.sup=c(1,2,3,4,5,6,7,14,15), quanti.sup=c(16),scale.unit=TRUE, graph=FALSE)
+  centre.dim = get_pca(centre.pca)
+  print(centre.data[1,])
+  
+  for( quanti in setdiff(quanti_all,c("lvef"))) {
+    line_pca=data.frame(
+      "centre"=centre,
+      "var"=quanti,
+      "Dim.1"=centre.dim$coord[quanti,1],
+      "Dim.2"=centre.dim$coord[quanti,2],
+      "Dim.3"=centre.dim$coord[quanti,3],
+      "Dim.4"=centre.dim$coord[quanti,4],
+      "Dim.5"=centre.dim$coord[quanti,5])
+    centre_pca=rbind(centre_pca,line_pca)
+  }
+}
+dump_table(centre_pca,file_centre_pca_dacp)
+pca_dacp=PCA(centre_pca,quali.sup=c(1,2), graph=FALSE)
 
 data1=imputePCA(data_train[,c(4:9)])
 data2=imputePCA(data_train[,c(4:10)])
@@ -113,7 +145,7 @@ famd.data=cbind(famd.impute$completeObs[setdiff(cols,c("centre","country"))],dat
 famd.data_no_centre=cbind(famd.impute_no_centre$completeObs[setdiff(cols,c("centre","country"))],data_cleaned[c("lvef","lvefbin")])
 
 famd=FAMD(famd.data, sup.var=c(13,14),ncp=15, graph=FALSE)
-famd_no_centre=FAMD(famd.data_no_centre, ncp=10, graph=FALSE)
+famd_no_centre=FAMD(famd.data_no_centre, ncp=15, graph=FALSE)
 fviz_screeplot(famd_no_centre, addlabels = TRUE, ylim = c(0, 50))
 fviz_contrib(famd,choice=c("var"),axe=1)
 fviz_famd_var(famd, choice=c("quali.var"), select.var=list("contrib"=5),   col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
