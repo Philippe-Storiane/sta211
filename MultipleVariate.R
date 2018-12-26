@@ -29,8 +29,8 @@ save(data.muvar, file="data_muvar.rda")
 load("data_muvar.rda")
 data_cleaned=data.clean(data.muvar)
 data1=imputePCA(data_cleaned[setdiff(quanti_all,c("lvef"))], ncp=5)
-mca.data=cbind(data1$completeObs,data_cleaned[union(quali_all,c("lvef"))])
-pca=PCA(mca.data, quali.sup=c(7,8,9,10,11,12,13,14,15),quanti.sup=16, scale.unit=TRUE,graph=FALSE)
+pca.data=cbind(data1$completeObs,data_cleaned[union(quali_all,c("lvef"))])
+pca=PCA(pca.data, quali.sup=c(7,8,9,10,11,12,13,14,15),quanti.sup=16, scale.unit=TRUE,graph=FALSE)
 fviz_screeplot(pca, addlabels = TRUE, ylim = c(0, 50))
 fviz_contrib(pca, choice=c("var"), axe=1)
 fviz_pca_var(pca, select.var=list("cos2"=0.5),col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
@@ -58,15 +58,15 @@ dump_table(centre_pca,file_centre_pca)
 
 
 #
-# Dump variable PCA coordinatez per center
+# Dump variable PCA coordinates per center
 #
 centre_pca=data.frame("centre"=character(0),"var"=character(0),"Dim.1"=numeric(0), "Dim.2"=numeric(0), "Dim.3"=numeric(0), "Dim.4"=numeric(0), "Dim.5"=numeric(0))
 file_centre_pca_dacp="centre_pca_dacp.csv"
-for(centre in levels(data.muvar$centre)) {
+for(centre in levels(pca.data$centre)) {
   var=as.character(centre)
   print(var)
-  centre.data = data.muvar %>% filter( data.muvar[c("centre")]==var)
-  centre.pca= PCA(centre.data,quali.sup=c(1,2,3,4,5,6,7,14,15), quanti.sup=c(16),scale.unit=TRUE, graph=FALSE)
+  centre.data = pca.data %>% filter( pca.data[c("centre")]==var)
+  centre.pca= PCA(centre.data,quali.sup=c(7,8,9,10,11,12,13,14,15), quanti.sup=c(16),scale.unit=TRUE, graph=FALSE)
   centre.dim = get_pca(centre.pca)
   print(centre.data[1,])
   
@@ -84,6 +84,10 @@ for(centre in levels(data.muvar$centre)) {
 }
 dump_table(centre_pca,file_centre_pca_dacp)
 pca_dacp=PCA(centre_pca,quali.sup=c(1,2), graph=FALSE)
+desc= centre_pca %>% select(var,centre)
+centre_pca_dacp=cbind(desc, get_pca_ind(pca_dacp)$coord)
+p=ggplot(data=centre_pca_dacp,aes(x=Dim.1,y=Dim.2))
+p+geom_point() + facet_wrap(~var,ncol=2)
 
 data1=imputePCA(data_train[,c(4:9)])
 data2=imputePCA(data_train[,c(4:10)])
@@ -99,21 +103,24 @@ fviz_pca_var(pca_completed, col.var="cos2",axes=c(1,2)) + theme_minimal() + scal
 load("data_muvar.rda")
 data_cleaned=data.clean()
 data1=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin","country"))])
-data2=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin"))])
+# data2=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin"))])
 data3=imputeMCA(data_cleaned[setdiff(quali_all,c("lvefbin","country","centre"))])
 
-mca.data=cbind(data2$completeObs[setdiff(quali_all, c("lvefbin"))],data_cleaned[c("lvefbin")])
+#
+# due to incoheent data on country (8 out of 22 centre) country is removed from imputation model
+#
+mca.data=cbind(data1$completeObs[setdiff(quali_all, c("lvefbin","country"))],data_cleaned[c("lvefbin")])
 # country has not  been used in impuation model
 mca.data_no_country=cbind(data1$completeObs[setdiff(quali_all, c("lvefbin","country"))],data_cleaned[c("lvefbin")])
 # country has been used in impuation model
 mca.data_no_country1=cbind(data2$completeObs[setdiff(quali_all, c("lvefbin","country"))],data_cleaned[c("lvefbin")])
 
+# all data have been used in imputation model (removed due to country incoherence)
+# mca.data_no_centre=cbind(data2$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
 # centre has been used in impuation model
 mca.data_no_centre=cbind(data1$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
 # centre has not been used in imputation model
 mca.data_no_centre1=cbind(data3$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
-# all data have been used in imputation model
-mca.data_no_centre2=cbind(data2$completeObs[setdiff(quali_all, c("centre","lvefbin","country"))],data_cleaned[c("lvefbin")])
 
 
 # Analysis without all variables excluding to explain
@@ -125,7 +132,7 @@ mca_no_country=MCA( mca.data_no_country, quali.sup=c(8), graph=FALSE, ncp=20)
 mca_no_centre=MCA( mca.data_no_centre, quali.sup=c(7), graph=FALSE, ncp=10)
 mca_no_centre1=MCA( mca.data_no_centre1, quali.sup=c(7), graph=FALSE, ncp=10)
 
-mca=MCA( mca.data, quali.sup=c(9), graph=FALSE, ncp=20)
+mca=MCA( mca.data, quali.sup=c(8), graph=FALSE, ncp=20)
 fviz_screeplot(mca, addlabels = TRUE, ylim = c(0, 50), title="Toutes variables explicatives hors pays et centre")
 fviz_contrib(mca,choice=c("var"),axe=1)
 # Complemental variables removed (only describing variable with cos2 > 0.5)
@@ -134,10 +141,52 @@ fviz_mca_var(mca, select.var=list("cos2"=0.5),  invisible=c("quali.sup"), col.va
 fviz_mca_var(mca, select.var=list("cos2"=0.4),   col.var="cos2",axes=c(1,2), title="Axe 1-2 Toutes variables explicatives hors pays et centre - 10 premières contributions") + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
 
 
+
+
+
+#
+# Dump variable mca coordinates per center
+#
+centre_mca=data.frame("centre"=character(0),"var"=character(0),"Dim.1"=numeric(0), "Dim.2"=numeric(0), "Dim.3"=numeric(0), "Dim.4"=numeric(0), "Dim.5"=numeric(0))
+file_centre_mca_dacp="centre_mca_dacp.csv"
+for(centre in levels(mca.data$centre)) {
+  var=as.character(centre)
+  print(var)
+  centre.data = mca.data %>% filter( mca.data[c("centre")]==var) %>% select(gender,copd,hypertension,previoushf,afib,cad,lvefbin)
+  centre.mca= MCA(centre.data,quali.sup=c(7), graph=FALSE,ncp=10)
+  centre.dim = get_mca(centre.mca)
+  print(centre.data[1,])
+  
+  for( quali in setdiff(quali_all,c("lvefbin","centre","country"))) {
+    for(index in 0:1) {
+      quali.name=sprintf("%s_%i", quali,index)
+      print(quali.name)
+      line_mca=data.frame(
+        "centre"=var,
+        "var"=quali.name,
+        "Dim.1"=centre.dim$coord[quali.name,1],
+        "Dim.2"=centre.dim$coord[quali.name,2],
+        "Dim.3"=centre.dim$coord[quali.name,3],
+        "Dim.4"=centre.dim$coord[quali.name,4],
+        "Dim.5"=centre.dim$coord[quali.name,5])
+      centre_mca=rbind(centre_mca,line_mca)
+    }
+  }
+}
+dump_table(centre_mca,file_centre_mca_dacp)
+mca_dacp=PCA(centre_mca,quali.sup=c(1,2), graph=FALSE)
+desc= centre_mca %>% select(var,centre)
+centre_mca_dacp=cbind(desc, get_pca_ind(mca_dacp)$coord)
+p=ggplot(data=centre_mca_dacp,aes(x=Dim.1,y=Dim.2))
+p+geom_point() + facet_wrap(~var,ncol=2)
+
+
+
+
 #
 # Multiple Data Analysis
 #
-cols=union(setdiff(quali_all,c("lvefbin")),setdiff(quanti_all,c("lvef")))
+cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
 data_cleaned=data.clean()
 famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
 famd.impute_no_centre=imputeFAMD(data_cleaned[setdiff(cols, c("centre","country"))], ncp=15)
