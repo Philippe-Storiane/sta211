@@ -93,3 +93,11 @@ data.clean= function (datafr=data_train) {
   return(data_cleaned)
 }
 
+extend.miss = function( vars, data_extended) {
+  for(var in vars ) {
+    var_miss=sprintf("%s_miss", var)
+    data_extended[,c(var_miss)] = ifelse(is.na(data_extended[,c(var)]),"miss","not miss")
+    data_extended[,c(var_miss)]=factor(data_extended[,c(var_miss)],levels=c("miss","not miss"))
+  }
+  return(data_extended)
+}

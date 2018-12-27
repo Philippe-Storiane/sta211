@@ -1,38 +1,31 @@
 library("dplyr")
+library("FactoMineR")
 
 source("Common.R")
 
 
-miss.process = function( vars, data_extended) {
-	for(var in vars ) {
-		var_miss=sprintf("%s_miss", var)
-		data_extended[,c(var_miss)] = ifelse(is.na(data_extended[,c(var)]),"miss","not miss")
-		data_extended[,c(var_miss)]=factor(c("miss","not miss"))
-	}
-	return(data_extended)
-}
+
 
 centre.freq = function( var, datafr=data_cleaned ) {
-    var=as.character(var)
-    mutate_expr = paste0(var,"_freq = n / sum(n)")
-    filter_expr = paste0( "as.numeric(",var, ") == 2")
-    var_freq=paste0(var,"_freq")
-    centre_freq = datafr %>%
-        group_by_("centre", var) %>%
-        summarize( n = n()) %>%
-        mutate_( mutate_expr ) %>%
-        filter_( filter_expr)
-    colnames(centre_freq)[[4]] = var_freq
-    centre_freq = centre_freq %>%
-        select_( "centre", var_freq)
+  var=as.character(var)
+  mutate_expr = paste0(var,"_freq = n / sum(n)")
+  filter_expr = paste0( "as.numeric(",var, ") == 2")
+  var_freq=paste0(var,"_freq")
+  centre_freq = datafr %>%
+    group_by_("centre", var) %>%
+    summarize( n = n()) %>%
+    mutate_( mutate_expr ) %>%
+    filter_( filter_expr)
+  colnames(centre_freq)[[4]] = var_freq
+  centre_freq = centre_freq %>%
+    select_( "centre", var_freq)
+  return(centre_freq)
 }
-
-
 
 
 data_cleaned=data.clean()
-data_extended = miss.process(setdiff(quali_all,c("centre","country")), data_cleaned)
-data_extended = miss.process(quanti_all,data_extended)
+data_extended = extend.miss(quali_miss, data_cleaned)
+data_extended = extend.miss(quanti_miss,data_extended)
 
 centre_data= data_cleaned %>%
   group_by(centre) %>%
@@ -54,17 +47,19 @@ centre_data= data_cleaned %>%
   )
 
 for(quali in setdiff(quali_all,c("centre","country"))) {
-    quali = as.character( quali )
-    centre_freq = centre.freq(quali)
-    print(centre_freq)
-    centre_data = centre_data %>% inner_join(centre_freq)
+  quali = as.character( quali )
+  centre_freq = centre.freq(quali, data_extended)
+  centre_data = centre_data %>% inner_join(centre_freq)
 }
 
-for (var in setdiff(union(quali_all,quanti_all), c("centre", "country","gender"))) {
-    var = sprintf("%s_miss", as.character(var))
-    centre_freq = centre.freq(var, data_extended)
-    print(centre_freq)
-    centre_data = centre_data %>% inner_join(centre_freq)
+for (var in union(quali_miss,quanti_miss)) {
+  var = sprintf("%s_miss", as.character(var))
+  centre_freq = centre.freq(var, data_extended)
+  centre_data = centre_data %>% inner_join(centre_freq)
 }
-
-
+centre_pca=PCA(centre_data,quali.sup=c(1),graph=FALSE)
+fviz_screeplot(centre_pca, addlabels = TRUE, ylim = c(0, 50), title="Toutes variables explicatives hors pays et centre")
+fviz_contrib(centre_pca,choice=c("var"),axe=1)
+# Complemental variables removed (only describing variable with cos2 > 0.5)
+fviz_pca_ind(centre_pca, select.var=list("cos2"=0.5),  col.var="cos2",axes=c(1,2)) + theme_minimal() + scale_color_gradient2(low="white", mid="blue", high="red",midpoint=0.1)
+#
