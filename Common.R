@@ -101,3 +101,21 @@ extend.miss = function( vars, data_extended) {
   }
   return(data_extended)
 }
+
+
+extend.miss.combine = function( target_var, combined_miss, data_extended) {
+  target_var=paste0(target_var,"_miss")
+  data_extended[,c(target_var)] = "not miss"
+  for(miss in combined_miss) {
+    miss=as.character(miss)
+    miss_var=paste0(miss,"_miss")
+    data_extended[,c(target_var)]=ifelse(
+        ( data_extended[,c(target_var)] == "miss" ) |
+        ( data_extended[,c(miss_var)]=="miss"),
+        "miss",
+        "not miss"
+    )
+  }
+  data_extended[,c(target_var)] = factor(data_extended[,c(target_var)],levels=c("miss","not miss"))
+  return( data_extended )
+}
