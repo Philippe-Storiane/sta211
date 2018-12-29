@@ -1,3 +1,5 @@
+library("CatEncoders")
+
 source("Variables.R")
 
 load("data_train.rda")
@@ -119,3 +121,47 @@ extend.miss.combine = function( target_var, combined_miss, data_extended) {
   data_extended[,c(target_var)] = factor(data_extended[,c(target_var)],levels=c("miss","not miss"))
   return( data_extended )
 }
+
+data.extend = function (datafr=data_cleaned) {
+  data_extended = extend.miss(quali_miss, datafr)
+  data_extended = extend.miss(quanti_miss,data_extended)
+  data_extended=extend.miss.combine("all",union(quali_miss, quanti_miss), data_extended)
+  data_extended=extend.miss.combine("not_bmi",setdiff(union(quali_miss, quanti_miss),c("bmi")), data_extended)
+#  data_extended=extend.discretize.quantile(quanti_all,data_extended)
+  return(data_extended)
+}
+
+#
+# cut by quantile
+#
+extend.discretize.quantile = function(quantis, datafr, n=4) {
+  data_extended = datafr
+  for(quanti in quantis) {
+    quanti.var=paste0(quanti,"_bin")
+    quanti.breaks = quantile(datafr[,quanti], probs=seq(0,1, 1/n), na.rm=TRUE)
+    data_extended[,quanti.var] = cut(datafr[,quanti],breaks=quanti.breaks, include.lowest = TRUE,ordered_result = TRUE, labels=paste0(quanti,"_",seq(1:n)))
+  }
+  return(data_extended)
+}
+
+
+
+
+
+encode.label <- function(X, name) {
+  labelEncoder <- LabelEncoder.fit(X[, name])
+  z <- transform(labelEncoder,X[, name])
+  X[,name]<- z
+  return(X)  
+}
+
+encode.one_hot <- function(X, name) {
+  oneHotEncoder <- OneHotEncoder.fit(data.frame(X[, name]))
+  z <- transform(oneHotEncoder,data.frame(X[, name]),sparse=FALSE)
+  classes <- slot(slot(oneHotEncoder, "column_encoders")[[1]], "classes")
+  colnames(z) <- paste0(name, classes)
+  X <- cbind(X, z)
+  X[,name]<- NULL
+  return(X)  
+}
+
