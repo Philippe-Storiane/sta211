@@ -1,42 +1,20 @@
 library("CatEncoders")
+library("missMDA")
+
 
 source("Variables.R")
 
 load("data_train.rda")
 
-famd.clean= function(datafr) {
-  tt=levels(datafr$completeObs$centre)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$centre) <- tt
-  
-  #tt=levels(famd.data$completeObs$country)
-  #tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  #eval.parent(substitute(levels(famd.data$completeObs$country) <- tt))
-  
-  tt=levels(datafr$completeObs$gender)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$gender)<- tt
-  
-  tt=levels(datafr$completeObs$hypertension)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$hypertension)<- tt
-  
-  tt=levels(datafr$completeObs$previoushf)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$previoushf)<- tt
-  
-  tt=levels(datafr$completeObs$afib)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$afib)<- tt
-  
-  tt=levels(datafr$completeObs$cad)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$cad)<- tt
-  
-  tt=levels(datafr$completeObs$copd)
-  tt=sub('[a-z]*_([0-9]*)','\\1',tt)
-  levels(datafr$completeObs$copd)<- tt
-  
+famd.clean= function(datafr=data_train, cols=quali_all) {
+  for(var in cols) {
+    if ( var %in% colnames(datafr)) {
+      l <- levels(datafr[,var])
+      l <- unlist(lapply(l, FUN = function(level) {gsub(".*_([0-9]*)", "\\1", level)}))
+      datafr[, var] <- as.factor(as.numeric(datafr[, var]))
+      levels(datafr[, var]) <- l
+    }
+  }
   return(datafr)
 }
 
@@ -61,6 +39,12 @@ data.clean= function (datafr=data_train) {
   dbp.max=103
   hr.min= 46
   hr.max=176
+  if ( ! ( "lvef" %in% colnames(datafr))) {
+    quanti_all=setdiff(quanti_all,c("lvef"))
+  }
+  if ( ! ( "lvefbin" %in% colnames(datafr))) {
+    quali_all=setdiff(quali_all,c("lvefbin"))
+  }
   data_cleaned = datafr
   data_cleaned[,c("bmi")]=ifelse(
     ( is.na(data_cleaned[,c("bmi") ]))| ( data_cleaned[,c("bmi")] < bmi.min) | ( data_cleaned[, c("bmi")] > bmi.max),
@@ -90,10 +74,29 @@ data.clean= function (datafr=data_train) {
     ( is.na(data_cleaned[,c("hr") ]))| ( data_cleaned[,c("hr")] < hr.min) | ( data_cleaned[, c("hr")] > hr.max),
     NA,
     data_cleaned[,c("hr")])
-  data_cleaned.quanti=scale(data_cleaned[quanti_all])
-  data_cleaned=cbind(data_cleaned.quanti, data_cleaned[quali_all])
+  # data_cleaned.quanti=scale(data_cleaned[quanti_all])
+  # data_cleaned=cbind(data_cleaned.quanti, data_cleaned[quali_all])
   return(data_cleaned)
 }
+
+data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))) {
+  data_cleaned=data.clean(datafr)
+  data_cleaned[,"s_sbp"] = data_cleaned[, "sbp"] - data_cleaned[,"dbp"]
+  quanti_all = union(intersect(quanti_all, colnames(data_cleaned)), c("s_sbp"))
+  quali_all = intersect(quali_all, colnames( data_cleaned ))
+  data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
+  famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+  data.result=famd.impute$completeObs
+  data.result=famd.clean(data.result)
+  for( col in c("lvefbin", "lvef","country")) {
+    if ( col %in% colnames(data_cleaned)) {
+      data.result=cbind(data.result, data_cleaned[c(col)])
+    }
+  }
+  # data.result=cbind(scale(data.result[ quanti_all ]), data.result[ quali_all ])
+  return(data.result)
+}
+
 
 extend.miss = function( vars, data_extended) {
   for(var in vars ) {
@@ -163,5 +166,27 @@ encode.one_hot <- function(X, name) {
   X <- cbind(X, z)
   X[,name]<- NULL
   return(X)  
+}
+
+output.check = function(file, n = nrow(data_test)) { 
+  y_pred = scan(file, what = "character") 
+  y_pred = factor(y_pred, levels = c("bad", "good")) 
+  if (length(y_pred) != n) 
+    stop("incorrect number of predictions") 
+  if (any(is.na(y_pred))) 
+    stop("predictions contain missing values (NA)") 
+  return(y_pred) 
+}
+
+output.rate = 
+  function(y_pred, y_test){ 
+    FP = (y_pred == "bad") & (y_test == "good") 
+    FN = (y_pred == "good") & (y_test == "bad") 
+    return(sum(FP+FN)/length(y_test)) 
+  }
+
+output.rate.confusion = function(data, pred) {
+  table_confusion <- table(data, pred)
+  1.0 - (table_confusion[1,1] + table_confusion[2,2])/sum(table_confusion)
 }
 
