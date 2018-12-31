@@ -3,9 +3,7 @@ library("missMDA")
 source("Common.R")
 
 
-cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))
-data_cleaned=data.clean()
-famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+
 data.som=famd.impute$completeObs
 for(quali in c("gender", "copd", "hypertension", "previoushf", "afib", "cad" )) {
   data.som = encode.label(data.som, quali)
