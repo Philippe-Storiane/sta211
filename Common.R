@@ -1,5 +1,6 @@
 library("CatEncoders")
 library("missMDA")
+library("discretization")
 
 
 source("Variables.R")
@@ -82,9 +83,10 @@ data.clean= function (datafr=data_train) {
 data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))) {
   data_cleaned=data.clean(datafr)
   data_cleaned[,"s_sbp"] = data_cleaned[, "sbp"] - data_cleaned[,"dbp"]
-  quanti_all = union(intersect(quanti_all, colnames(data_cleaned)), c("s_sbp"))
+  quanti_all = intersect(quanti_all, colnames(data_cleaned))
   quali_all = intersect(quali_all, colnames( data_cleaned ))
-  data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
+  # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
+  data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
   famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
   data.result=famd.impute$completeObs
   data.result=famd.clean(data.result)
@@ -93,6 +95,8 @@ data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbi
       data.result=cbind(data.result, data_cleaned[c(col)])
     }
   }
+  data.result[,"centre_country"] = as.factor(paste0(data.result[,"centre"],"_",data.result[,"country"]))
+  data.result[,"s_sbp"] = data.result[, "sbp"] - data.result[,"dbp"]
   # data.result=cbind(scale(data.result[ quanti_all ]), data.result[ quali_all ])
   return(data.result)
 }
@@ -147,7 +151,20 @@ extend.discretize.quantile = function(quantis, datafr, n=4) {
   return(data_extended)
 }
 
-
+extend.discretize.mdlp = function( quantis, datafr) {
+  data_extended = datafr
+  for(quanti in quantis) {
+    quanti.data = na.omit(data_train[,c(quanti, "lvefbin")])
+    x = quanti.data[,quanti]
+    y = quanti.data[,"lvefbin"]
+    quanti.cut = cutPoints(x,y)
+    quanti.breaks=c(min(x),quanti.cut,max(x))
+    quanti.var=paste0(quanti,"_bin")
+    n=length(quanti.breaks) - 1
+    data_extended[,quanti.var] = cut(datafr[,quanti],breaks=quanti.breaks, include.lowest = TRUE,ordered_result = TRUE, labels=paste0(quanti,"_",seq(1:n)))
+  }
+  return(data_extended)
+}
 
 
 
