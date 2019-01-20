@@ -26,20 +26,38 @@ dump_table = function( data, file_name) {
 }
 
 
-  
+
 data.clean= function (datafr=data_train) {
-  bmi.min=13.4
-  bmi.max=42.76
-  age.min=31
-  age.max=107
-  egfr.min=13.99
-  egfr.max=168.88
-  sbp.min=50.5
-  sbp.max=179.5
-  dbp.min=41
-  dbp.max=103
-  hr.min= 46
-  hr.max=176
+  bmi.q = quantile(data_train[,"bmi"],probs=c(0.01,0.99), na.rm=TRUE)
+  bmi.min=bmi.q[[1]]
+  bmi.max=bmi.q[[2]]
+  #bmi.min=13.4
+  #bmi.max=42.76
+  age.q = quantile(data_train[,"age"],probs=c(0.01,0.99), na.rm=TRUE)
+  age.min=age.q[[1]]
+  age.max=age.q[[2]]
+  #age.min=31
+  #age.max=107
+  egfr.q = quantile(data_train[,"egfr"],probs=c(0.01,0.99), na.rm=TRUE)
+  egfr.min=egfr.q[[1]]
+  egfr.max=egfr.q[[2]]
+  #egfr.min=13.99
+  #egfr.max=168.88
+  sbp.q = quantile(data_train[,"sbp"],probs=c(0.01,0.99), na.rm=TRUE)
+  sbp.min=sbp.q[[1]]
+  sbp.max=sbp.q[[2]]
+  #sbp.min=50.5
+  #sbp.max=179.5
+  dbp.q = quantile(data_train[,"dbp"],probs=c(0.01,0.99), na.rm=TRUE)
+  dbp.min=dbp.q[[1]]
+  dbp.max=dbp.q[[2]]
+  #dbp.min=41
+  #dbp.max=103
+  hr.q = quantile(data_train[,"hr"],probs=c(0.01,0.99), na.rm=TRUE)
+  hr.min=hr.q[[1]]
+  hr.max=hr.q[[2]]
+  #hr.min= 46
+  #hr.max=176
   if ( ! ( "lvef" %in% colnames(datafr))) {
     quanti_all=setdiff(quanti_all,c("lvef"))
   }
@@ -82,12 +100,11 @@ data.clean= function (datafr=data_train) {
 
 data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))) {
   data_cleaned=data.clean(datafr)
-  data_cleaned[,"s_sbp"] = data_cleaned[, "sbp"] - data_cleaned[,"dbp"]
   quanti_all = intersect(quanti_all, colnames(data_cleaned))
   quali_all = intersect(quali_all, colnames( data_cleaned ))
   # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
   data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
-  famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+  famd.impute = imputeFAMD(data_cleaned[cols],ncp=15,method='EM')
   data.result=famd.impute$completeObs
   data.result=famd.clean(data.result)
   for( col in c("lvefbin", "lvef","country")) {
@@ -119,10 +136,10 @@ extend.miss.combine = function( target_var, combined_miss, data_extended) {
     miss=as.character(miss)
     miss_var=paste0(miss,"_miss")
     data_extended[,c(target_var)]=ifelse(
-        ( data_extended[,c(target_var)] == "miss" ) |
+      ( data_extended[,c(target_var)] == "miss" ) |
         ( data_extended[,c(miss_var)]=="miss"),
-        "miss",
-        "not miss"
+      "miss",
+      "not miss"
     )
   }
   data_extended[,c(target_var)] = factor(data_extended[,c(target_var)],levels=c("miss","not miss"))
@@ -134,7 +151,7 @@ data.extend = function (datafr=data_cleaned) {
   data_extended = extend.miss(quanti_miss,data_extended)
   data_extended=extend.miss.combine("all",union(quali_miss, quanti_miss), data_extended)
   data_extended=extend.miss.combine("not_bmi",setdiff(union(quali_miss, quanti_miss),c("bmi")), data_extended)
-#  data_extended=extend.discretize.quantile(quanti_all,data_extended)
+  #  data_extended=extend.discretize.quantile(quanti_all,data_extended)
   return(data_extended)
 }
 
@@ -206,4 +223,3 @@ output.rate.confusion = function(data, pred) {
   table_confusion <- table(data, pred)
   1.0 - (table_confusion[1,1] + table_confusion[2,2])/sum(table_confusion)
 }
-
