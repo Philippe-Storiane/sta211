@@ -17,14 +17,14 @@ data.mca = dudi.acm(data.test[data.mca.cols], nf = 10, scannf = FALSE)
 data.mca.within = wca( data.mca, data.test$centre, scannf = FALSE)
 data.mca.between = bca(data.mca, data.test$centre, scannf = FALSE)
 data.mca.ktab = ktab.within(data.mca.within)
-data.mca.statis = ktab.within(data.mca.within)
+data.mca.statis = statis(data.mca.ktab,scann=FALSE)
 
 data.famd.cols=union(data.pca.cols,data.mca.cols)
-data.famd = dudi.mix(data.test[data.famd.cols], nf = 10, scannf = FALSE)
+data.famd = dudi.mix(data.test[data.famd.cols], nf = 15, scannf = FALSE)
 data.famd.within = wca( data.famd, data.test$centre, scannf = FALSE)
 data.famd.between = bca(data.famd, data.test$centre, scannf = FALSE)
 data.famd.ktab = ktab.within(data.famd.within)
-data.famd.statis = ktab.within(data.famd.within)
+data.famd.statis = statis(data.famd.ktab,scann=FALSE)
 
 
 
