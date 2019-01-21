@@ -19,6 +19,7 @@ filename = "data.extend.ImputeFamd-No_S_SBP-bin-10.csv"
 filename = "data.extend.ImputeFamd-No_S_SBP-bin-10-centre_country.csv"
 filename = "2019-01-19-extend-ImputeFAMD-20-bin-10.csv"
 filename = "2019-01-19-ImputeFAMD-15-EM-bin-10.csv"
+filename = "2019-01-19-ImputeFAMD-15-EM-bin-10.csv"
 delimiter = ';'
 data = []
 
@@ -90,6 +91,7 @@ X = X.drop("lvefbin", 1)
 
 filename_test = 'test.2019-01-19-extend-ImputeFAMD-20-bin-10.csv'
 filename_test = 'test.2019-01-19-ImputeFAMD-15-EM-bin-10.csv'
+filename_test = 'test.2019-01-19-ImputeFAMD-15-EM-bin-10.csv'
 cols_test_score= cols_score.copy()
 cols_test_score.remove("lvefbin")
 data_test = pd.read_csv(filename_test, header=0, sep=delimiter, error_bad_lines=False,decimal=",",
@@ -148,4 +150,4 @@ df = pd.DataFrame(pred_test)
 import datetime
 
 today = datetime.datetime.now()
-df.to_csv(today.strftime('%Y%m%d%H%M') + "-python_extratrees-imputeFAMD-15-EM-bin-10.csv", index=False, encoding='utf-8', header=False)
+df.to_csv(today.strftime('%Y%m%d%H%M') + "-python_extratrees-Handcrafted-Outliers-imputeFAMD-20-bin-10.csv", index=False, encoding='utf-8', header=False)
