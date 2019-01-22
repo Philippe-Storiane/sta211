@@ -6,6 +6,7 @@ library("discretization")
 source("Variables.R")
 
 load("data_train.rda")
+load("data_test.rda")
 
 famd.clean= function(datafr=data_train, cols=quali_all) {
   for(var in cols) {
@@ -99,22 +100,26 @@ data.clean= function (datafr=data_train) {
 }
 
 data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef")))) {
+  data.nrow = nrow(datafr)
+  if ( nrow(datafr) != nrow(data_train)) {
+    datafr=rbind(datafr, data_train[colnames(datafr)])  
+  }
   data_cleaned=data.clean(datafr)
   quanti_all = intersect(quanti_all, colnames(data_cleaned))
   quali_all = intersect(quali_all, colnames( data_cleaned ))
   # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
   data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
-  famd.impute = imputeFAMD(data_cleaned[cols],ncp=15,method='EM')
-  data.result=famd.impute$completeObs
+  famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+  data.result=famd.impute$completeObs[1:data.nrow,]
   data.result=famd.clean(data.result)
   for( col in c("lvefbin", "lvef","country")) {
     if ( col %in% colnames(data_cleaned)) {
-      data.result=cbind(data.result, data_cleaned[c(col)])
+      data.result[,col]=data_cleaned[1:data.nrow, col]
     }
   }
   data.result[,"centre_country"] = as.factor(paste0(data.result[,"centre"],"_",data.result[,"country"]))
   data.result[,"s_sbp"] = data.result[, "sbp"] - data.result[,"dbp"]
-  # data.result=cbind(scale(data.result[ quanti_all ]), data.result[ quali_all ])
+  data.result=cbind(scale(data.result[ union(quanti_all,c("s_sbp")) ]), data.result[ quali_all ])
   return(data.result)
 }
 

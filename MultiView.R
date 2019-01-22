@@ -3,6 +3,7 @@ source("Common.R")
 library("ade4")
 library("factoextra")
 
+
 data.test = data.prepare(data_train)
 data.pca.cols=setdiff(quanti_all, "lvef")
 data.pca= dudi.pca(data.test[data.pca.cols],nf=5, scannf=FALSE)
@@ -12,7 +13,7 @@ data.pca.ktab = ktab.within(data.pca.within)
 data.pca.statis = statis(data.pca.ktab, scann = FALSE)
 
 
-data.mca.cols=setdiff(quali_all, c("lvefbin","centre"))
+data.mca.cols=setdiff(quali_all, c("lvefbin","centre","country"))
 data.mca = dudi.acm(data.test[data.mca.cols], nf = 10, scannf = FALSE)
 data.mca.within = wca( data.mca, data.test$centre, scannf = FALSE)
 data.mca.between = bca(data.mca, data.test$centre, scannf = FALSE)
@@ -25,7 +26,4 @@ data.famd.within = wca( data.famd, data.test$centre, scannf = FALSE)
 data.famd.between = bca(data.famd, data.test$centre, scannf = FALSE)
 data.famd.ktab = ktab.within(data.famd.within)
 data.famd.statis = statis(data.famd.ktab,scann=FALSE)
-
-
-
 
