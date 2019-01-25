@@ -105,21 +105,25 @@ data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbi
     datafr=rbind(datafr, data_train[colnames(datafr)])  
   }
   data_cleaned=data.clean(datafr)
+  # data_cleaned=datafr
   quanti_all = intersect(quanti_all, colnames(data_cleaned))
   quali_all = intersect(quali_all, colnames( data_cleaned ))
   # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
   data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
-  famd.impute = imputeFAMD(data_cleaned[cols],ncp=20)
+  data_cleaned[,"centre_country"] = as.factor(paste0(data_cleaned[,"centre"],"_",data_cleaned[,"country"]))
+  famd.impute = imputeFAMD(data_cleaned[cols],ncp=5)
   data.result=famd.impute$completeObs[1:data.nrow,]
   data.result=famd.clean(data.result)
-  for( col in c("lvefbin", "lvef","country")) {
+  for( col in c("lvefbin", "lvef","country","centre")) {
     if ( col %in% colnames(data_cleaned)) {
-      data.result[,col]=data_cleaned[1:data.nrow, col]
+      if ( ! ( col %in% colnames(data.result))) {
+        data.result[,col]=data_cleaned[1:data.nrow, col]
+      }      
     }
   }
   data.result[,"centre_country"] = as.factor(paste0(data.result[,"centre"],"_",data.result[,"country"]))
   data.result[,"s_sbp"] = data.result[, "sbp"] - data.result[,"dbp"]
-  data.result=cbind(scale(data.result[ union(quanti_all,c("s_sbp")) ]), data.result[ quali_all ])
+  data.result=cbind(scale(data.result[ union(quanti_all,c("s_sbp")) ]), data.result[ union(quali_all,c("centre_country")) ])
   return(data.result)
 }
 
