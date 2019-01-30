@@ -15,6 +15,9 @@ expl.cols=union(setdiff(quali_all,c("lvefbin","centre","country")),setdiff(quant
 expl.cols=union(expl.cols,c("centre_country"))
 # imutation toutes variables hors centre
 expl.cols=union(setdiff(quali_all,c("lvefbin","centre")),setdiff(quanti_all,c("lvef")))
+# imputation toutes variables hors pays et egfr
+expl.cols=union(setdiff(quali_all,c("lvefbin","country")),setdiff(quanti_all,c("lvef","egfr")))
+
 
 data.train=data.prepare(data_train,expl.cols)
 data.train.extend = extend.discretize.quantile(extend.discretize.cols, data.train, 10)
@@ -38,6 +41,9 @@ homals.levels=c("numerical","numerical","numerical","numerical","numerical","num
 # toutes variables hors centre
 homals.cols = union(paste0(extend.discretize.cols,"_bin"), setdiff(quali_all, c("lvefbin","centre")))
 homals.levels=c("numerical","numerical","numerical","numerical","numerical","numerical","ordinal","ordinal","ordinal","ordinal","ordinal","ordinal","ordinal")
+# toutes variables hors pays et egfr
+homals.cols = union(paste0(extend.discretize.cols,"_bin"), setdiff(quali_all, c("lvefbin","country")))
+homals.levels=c("numerical","numerical","numerical","numerical","numerical","ordinal","ordinal","ordinal","ordinal","ordinal","ordinal","ordinal")
 
 
 homals.res=homals(data.train.extend[homals.cols],rank=5, level=homals.levels)
@@ -54,7 +60,7 @@ extend.score = function(homals.res, datafr) {
 }
 data.train.extend=extend.score(homals.res,data.train.extend)
 data.test.extend = extend.score(homals.res, data.test.extend)
-test.name="ImputeFAMD-Var-CentreCountry-bin-10"
+test.name="MissForest-Var-Country-bin-10"
 test.timestamp = format(Sys.time(), format="%Y%m%d%H%M")
 dump_table(data.train.extend,paste0("data.train.", test.timestamp, test.name,".csv"))
 dump_table(data.test.extend,paste0("data.test.", test.timestamp, test.name,".csv"))

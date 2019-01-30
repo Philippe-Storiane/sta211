@@ -1,5 +1,6 @@
 library("CatEncoders")
 library("missMDA")
+library("missForest")
 library("discretization")
 
 
@@ -105,15 +106,17 @@ data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbi
     datafr=rbind(datafr, data_train[colnames(datafr)])  
   }
   data_cleaned=data.clean(datafr)
-  # data_cleaned=datafr
+  data_cleaned=datafr
   quanti_all = intersect(quanti_all, colnames(data_cleaned))
   quali_all = intersect(quali_all, colnames( data_cleaned ))
   # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
   data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
   data_cleaned[,"centre_country"] = as.factor(paste0(data_cleaned[,"centre"],"_",data_cleaned[,"country"]))
-  famd.impute = imputeFAMD(data_cleaned[cols],ncp=5)
-  data.result=famd.impute$completeObs[1:data.nrow,]
-  data.result=famd.clean(data.result)
+  #famd.impute = imputeFAMD(data_cleaned[cols],ncp=5)
+  #data.result=famd.impute$completeObs[1:data.nrow,]
+  #data.result=famd.clean(data.result)
+  missForest.impute = missForest( data_cleaned[cols])
+  data.result = missForest.impute$ximp
   for( col in c("lvefbin", "lvef","country","centre")) {
     if ( col %in% colnames(data_cleaned)) {
       if ( ! ( col %in% colnames(data.result))) {
