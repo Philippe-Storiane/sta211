@@ -57,26 +57,26 @@ data.split.pca.statis = statis(data.split.pca.ktab)
 data.centre = data.frame("centre"=character(0),"C1.1"= numeric(0), "C2.1"=numeric(0), "C3.1"=numeric(0))
 # data.centre = data.frame("centre"=character(0),"C1.1"= numeric(0), "C2.1"=numeric(0), "C3.1"=numeric(0), "C1.2"= numeric(0), "C2.2"=numeric(0), "C3.2"=numeric(0)) # ,  "C1.3"= numeric(0), "C2.3"=numeric(0), "C3.3"=numeric(0)  , "C1.4"= numeric(0), "C2.4"=numeric(0), "C3.4"=numeric(0))
 for ( centre in levels(data_train$centre)) {
-    centre.name1=paste0(centre,".1")
-    centre.name2=paste0(centre,".2")
-    centre.name3=paste0(centre,".3")
-    centre.name4=paste0(centre,".4")
-    data.centre.line = data.frame(
-        "centre"=centre,
-        "C1.1" = data.famd.statis$C.T4[ centre.name1, "C1"],
-        "C2.1" = data.famd.statis$C.T4[ centre.name1, "C2"],
-        "C3.1" = data.famd.statis$C.T4[ centre.name1, "C3"] #,
-#        "C1.2" = data.famd.statis$C.T4[ centre.name2, "C1"],
-#        "C2.2" = data.famd.statis$C.T4[ centre.name2, "C2"],
-#        "C3.2" = data.famd.statis$C.T4[ centre.name2, "C3"],
-#        "C1.3" = data.famd.statis$C.T4[ centre.name3, "C1"],
-#        "C2.3" = data.famd.statis$C.T4[ centre.name3, "C2"],
-#        "C3.3" = data.famd.statis$C.T4[ centre.name3, "C3"],
-#        "C1.4" = data.famd.statis$C.T4[ centre.name4, "C1"],
-#        "C2.4" = data.famd.statis$C.T4[ centre.name4, "C2"],
-#        "C3.4" = data.famd.statis$C.T4[ centre.name4, "C3"]
-    )
-    data.centre = rbind(data.centre, data.centre.line)
+  centre.name1=paste0(centre,".1")
+  centre.name2=paste0(centre,".2")
+  centre.name3=paste0(centre,".3")
+  centre.name4=paste0(centre,".4")
+  data.centre.line = data.frame(
+    "centre"=centre,
+    "C1.1" = data.famd.statis$C.T4[ centre.name1, "C1"],
+    "C2.1" = data.famd.statis$C.T4[ centre.name1, "C2"],
+    "C3.1" = data.famd.statis$C.T4[ centre.name1, "C3"] #,
+    #        "C1.2" = data.famd.statis$C.T4[ centre.name2, "C1"],
+    #        "C2.2" = data.famd.statis$C.T4[ centre.name2, "C2"],
+    #        "C3.2" = data.famd.statis$C.T4[ centre.name2, "C3"],
+    #        "C1.3" = data.famd.statis$C.T4[ centre.name3, "C1"],
+    #        "C2.3" = data.famd.statis$C.T4[ centre.name3, "C2"],
+    #        "C3.3" = data.famd.statis$C.T4[ centre.name3, "C3"],
+    #        "C1.4" = data.famd.statis$C.T4[ centre.name4, "C1"],
+    #        "C2.4" = data.famd.statis$C.T4[ centre.name4, "C2"],
+    #        "C3.4" = data.famd.statis$C.T4[ centre.name4, "C3"]
+  )
+  data.centre = rbind(data.centre, data.centre.line)
 }
 data.centre.pca = PCA(data.centre, quali.sup=c(1), graph= FALSE)
 data.centre.hcpc=HCPC(data.centre.pca,graph=FALSE)

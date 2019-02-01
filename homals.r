@@ -49,18 +49,18 @@ homals.levels=c("numerical","numerical","numerical","numerical","numerical","ord
 homals.res=homals(data.train.extend[homals.cols],rank=5, level=homals.levels)
 
 extend.score = function(homals.res, datafr) {
-    extend.data = datafr
-    for( col in colnames(homals.res$scoremat)) {
-        print( col )
-        col.name = paste0(col,"_score")
-        col.index = as.integer(datafr[,col])
-        extend.data[,col.name]= homals.res$low[[col]][ col.index,1]
-    }
-    return(extend.data)
+  extend.data = datafr
+  for( col in colnames(homals.res$scoremat)) {
+    print( col )
+    col.name = paste0(col,"_score")
+    col.index = as.integer(datafr[,col])
+    extend.data[,col.name]= homals.res$low[[col]][ col.index,1]
+  }
+  return(extend.data)
 }
 data.train.extend=extend.score(homals.res,data.train.extend)
 data.test.extend = extend.score(homals.res, data.test.extend)
-test.name="MissForest-Var-Country-bin-10"
+test.name="NoOutlier-ImputeFAMD-Var-Country-bin-10"
 test.timestamp = format(Sys.time(), format="%Y%m%d%H%M")
 dump_table(data.train.extend,paste0("data.train.", test.timestamp, test.name,".csv"))
 dump_table(data.test.extend,paste0("data.test.", test.timestamp, test.name,".csv"))

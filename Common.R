@@ -112,11 +112,11 @@ data.prepare = function(datafr=data_train,cols=union(setdiff(quali_all,c("lvefbi
   # data_cleaned=cbind(scale(data_cleaned[quanti_all]),data_cleaned[quali_all])
   data_cleaned=cbind(data_cleaned[quanti_all],data_cleaned[quali_all])
   data_cleaned[,"centre_country"] = as.factor(paste0(data_cleaned[,"centre"],"_",data_cleaned[,"country"]))
-  #famd.impute = imputeFAMD(data_cleaned[cols],ncp=5)
-  #data.result=famd.impute$completeObs[1:data.nrow,]
-  #data.result=famd.clean(data.result)
-  missForest.impute = missForest( data_cleaned[cols])
-  data.result = missForest.impute$ximp
+  famd.impute = imputeFAMD(data_cleaned[cols],ncp=5)
+  data.result=famd.impute$completeObs[1:data.nrow,]
+  data.result=famd.clean(data.result)
+  #missForest.impute = missForest( data_cleaned[cols])
+  #data.result = missForest.impute$ximp[1:data.nrow,]
   for( col in c("lvefbin", "lvef","country","centre")) {
     if ( col %in% colnames(data_cleaned)) {
       if ( ! ( col %in% colnames(data.result))) {
