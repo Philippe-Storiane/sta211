@@ -74,6 +74,7 @@ class Reader:
 
     def process_dataset(self, *row_parts):
         row_parts = list(row_parts)
+        tag = row_parts[0]
         word = row_parts[1]  # (, )
 
         if not self.is_evaluating and self.config.RANDOM_CONTEXTS:
@@ -167,7 +168,8 @@ class Reader:
                 PATH_TARGET_INDICES_KEY: path_target_indices, VALID_CONTEXT_MASK_KEY: valid_contexts_mask,
                 PATH_SOURCE_LENGTHS_KEY: path_source_lengths, PATH_LENGTHS_KEY: path_lengths,
                 PATH_TARGET_LENGTHS_KEY: path_target_lengths, PATH_SOURCE_STRINGS_KEY: path_source_strings,
-                PATH_STRINGS_KEY: path_strings, PATH_TARGET_STRINGS_KEY: path_target_strings
+                PATH_STRINGS_KEY: path_strings, PATH_TARGET_STRINGS_KEY: path_target_strings,
+                TARGET_TAG_KEY: tag
                 }
 
     def reset(self, sess):

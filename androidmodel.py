@@ -161,6 +161,7 @@ class AndroidModel:
             self.eval_predicted_indices_op, self.eval_topk_values, _, _, self.method_embedding = \
                 self.build_test_graph(reader_output)
             self.eval_true_target_strings_op = reader_output[androidreader.TARGET_STRING_KEY]
+            self.eval_tag_key_op = reader_output[ androidreader.TARGET_TAG_KEY]
             self.saver = tf.train.Saver(max_to_keep=10)
 
         if self.config.LOAD_PATH and not self.config.TRAIN_PATH:
@@ -194,12 +195,14 @@ class AndroidModel:
 
             try:
                 while True:
-                    predicted_indices, true_target_strings, top_values, method_embeddings = self.sess.run(
-                        [self.eval_predicted_indices_op, self.eval_true_target_strings_op, self.eval_topk_values, self.method_embedding],
+                    predicted_indices, true_target_strings, top_values, method_embeddings, tag= self.sess.run(
+                        [self.eval_predicted_indices_op, self.eval_true_target_strings_op, self.eval_topk_values, self.method_embedding, self.eval_tag_key_op],
                     )
-                    print( method_embeddings.shape )
-                    print( "0,0 " +  str(method_embeddings[0,0]))
-                    print( "MAX_LINE,MAX_COLUMN " + str(method_embeddings[ method_embeddings.shape[0] - 1 , method_embeddings.shape[1] - 1]))
+                    #print( tag.shape )
+                    #print( tag[0])
+#                    print( method_embeddings.shape )
+#                    print( "0,0 " +  str(method_embeddings[0,0]))
+#                    print( "MAX_LINE,MAX_COLUMN " + str(method_embeddings[ method_embeddings.shape[0] - 1 , method_embeddings.shape[1] - 1]))
                     #print( true_target_strings )
                     true_target_strings = Common.binary_to_string_list(true_target_strings)
                     ref_file.write(
@@ -234,6 +237,7 @@ class AndroidModel:
                     embedding_file.write(
                         '\n'.join(
                             [
+                                Common.binary_to_string( tag[ i ] ) + ',' +
                                 ','.join([ str( method_embeddings[ i, j]) for j in range(method_embeddings.shape[ 1 ])])
                                     for i in range( method_embeddings.shape[0])]) + '\n')
             except tf.errors.OutOfRangeError:
